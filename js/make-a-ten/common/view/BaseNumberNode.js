@@ -24,6 +24,10 @@ import imagePaperBackground1000 from '../../../../mipmaps/paper-background-1000_
 import imagePaperBackground100 from '../../../../mipmaps/paper-background-100_png.js';
 import imagePaperBackground10 from '../../../../mipmaps/paper-background-10_png.js';
 import imagePaperBackground1 from '../../../../mipmaps/paper-background-1_png.js';
+import imagePeeledPaperBackground1000 from '../../../../mipmaps/peeled-paper-background-1000_png.js';
+import imagePeeledPaperBackground100 from '../../../../mipmaps/peeled-paper-background-100_png.js';
+import imagePeeledPaperBackground10 from '../../../../mipmaps/peeled-paper-background-10_png.js';
+import imagePeeledPaperBackground1 from '../../../../mipmaps/peeled-paper-background-1_png.js';
 import makeATen from '../../../makeATen.js';
 
 // place => mipmap info
@@ -32,6 +36,14 @@ const BACKGROUND_IMAGE_MAP = {
   1: imagePaperBackground10,
   2: imagePaperBackground100,
   3: imagePaperBackground1000
+};
+
+// place => mipmap info for peeled papers
+const PEELED_BACKGROUND_IMAGE_MAP = {
+  0: imagePeeledPaperBackground1,
+  1: imagePeeledPaperBackground10,
+  2: imagePeeledPaperBackground100,
+  3: imagePeeledPaperBackground1000
 };
 
 // digit => mipmap info
@@ -72,8 +84,9 @@ class BaseNumberNode extends Node {
   /**
    * @param {BaseNumber} baseNumber
    * @param {number} opacity
+   * @param {boolean} isPartOfStack
    */
-  constructor( baseNumber, opacity ) {
+  constructor( baseNumber, opacity, isPartOfStack = false ) {
     super( { scale: SCALE } );
 
     // Position of the initial digit
@@ -88,10 +101,19 @@ class BaseNumberNode extends Node {
     // Translate everything by our offset
     this.translation = baseNumber.offset;
 
-    // The paper behind the numbers
-    this.addChild( new Image( BACKGROUND_IMAGE_MAP[ baseNumber.place ], {
-      imageOpacity: opacity
-    } ) );
+    // Add the paper behind the numbers
+    let paperBackgroundImage;
+    if ( baseNumber.numberValue === 1 && !isPartOfStack ) {
+      paperBackgroundImage = new Image( BACKGROUND_IMAGE_MAP[ baseNumber.place ], {
+        imageOpacity: opacity
+      } );
+    }
+    else {
+      paperBackgroundImage = new Image( PEELED_BACKGROUND_IMAGE_MAP[ baseNumber.place ], {
+        imageOpacity: opacity
+      } );
+    }
+    this.addChild( paperBackgroundImage );
 
     // The initial (non-zero) digit
     this.addChild( new Image( DIGIT_IMAGE_MAP[ baseNumber.digit ], {

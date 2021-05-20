@@ -8,15 +8,20 @@
 
 import Emitter from '../../../../../axon/js/Emitter.js';
 import Bounds2 from '../../../../../dot/js/Bounds2.js';
+import Shape from '../../../../../kite/js/Shape.js';
 import arrayRemove from '../../../../../phet-core/js/arrayRemove.js';
 import DragListener from '../../../../../scenery/js/listeners/DragListener.js';
 import Node from '../../../../../scenery/js/nodes/Node.js';
+import Path from '../../../../../scenery/js/nodes/Path.js';
 import Rectangle from '../../../../../scenery/js/nodes/Rectangle.js';
 import makeATen from '../../../makeATen.js';
 import ArithmeticRules from '../model/ArithmeticRules.js';
 import BaseNumber from '../model/BaseNumber.js';
 import PaperNumber from '../model/PaperNumber.js';
 import BaseNumberNode from './BaseNumberNode.js';
+
+// place => y offsets for the grippy lines, empirically determined
+const PLACE_GRIPPY_Y_OFFSET = { 0: 15, 1: 20, 2: 35, 3: 38 };
 
 class PaperNumberNode extends Node {
   /**
@@ -143,11 +148,27 @@ class PaperNumberNode extends Node {
    */
   updateNumber() {
     const reversedBaseNumbers = this.paperNumber.baseNumbers.slice().reverse();
+
     // Reversing allows easier opacity computation and has the nodes in order for setting children.
-    this.numberImageContainer.children = _.map( reversedBaseNumbers, ( baseNumber, index ) => new BaseNumberNode( baseNumber, 0.95 * Math.pow( 0.97, index ) ) );
+    this.numberImageContainer.children = _.map( reversedBaseNumbers,
+      ( baseNumber, index ) => new BaseNumberNode( baseNumber, 0.95 * Math.pow( 0.97, index ), reversedBaseNumbers.length > 1 ) );
 
     // Grab the bounds of the biggest base number for the full bounds
-    const fullBounds = this.paperNumber.baseNumbers[ this.paperNumber.baseNumbers.length - 1 ].bounds;
+    const biggestPaperNumber = this.paperNumber.baseNumbers[ this.paperNumber.baseNumbers.length - 1 ];
+    const fullBounds = biggestPaperNumber.bounds;
+    const biggestPaperNumberIsOnesPlace = biggestPaperNumber.place === 0;
+
+    const yMargin = PLACE_GRIPPY_Y_OFFSET[ biggestPaperNumber.place ];
+    const lineLength = biggestPaperNumberIsOnesPlace ? 24 : 66; // empirically determined
+    const lineSeparation = biggestPaperNumberIsOnesPlace ? 4 : 5; // empirically determined
+    const grippyLines = new Path( new Shape()
+      .moveTo( 0, 0 ).lineTo( lineLength, 0 ).moveTo( 0, lineSeparation ).lineTo( lineLength, lineSeparation ).close(), {
+      stroke: 'rgb( 102, 102, 103 )',
+      lineWidth: 1,
+      centerX: fullBounds.centerX,
+      bottom: fullBounds.bottom - yMargin
+    } );
+    this.numberImageContainer.addChild( grippyLines );
 
     // Split target only visible if our number is > 1. Move target can resize as needed.
     if ( this.paperNumber.numberValueProperty.value === 1 ) {
